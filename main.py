@@ -28,6 +28,8 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(player_img, (50, 38))
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
+        self.radius = 20
+        #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.centerx = WIDTH/2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 8
@@ -37,7 +39,7 @@ class Player(pygame.sprite.Sprite):
         if (key_pressed[pygame.K_RIGHT]):
             self.rect.x += self.speedx
         if (key_pressed[pygame.K_LEFT]):
-            self.rect.x -= self.speedx 
+            self.rect.x -= self.speedx
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
@@ -51,15 +53,30 @@ class Player(pygame.sprite.Sprite):
 class Rock(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = rock_img
-        self.image.set_colorkey(BLACK)
+        self.image_ori = rock_img
+        self.image_ori.set_colorkey(BLACK)
+        self.image = self.image_ori.copy()
+
         self.rect = self.image.get_rect()
+        self.radius = self.rect.width * 0.85 / 2
+        #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.x =  random.randrange(0, WIDTH - self.rect.width)
         self.rect.y =  random.randrange(-100, -40)
         self.speedy =  random.randrange(2, 10)
         self.speedx = random.randrange(-3, 3)
-    
+        self.total_degree = 0
+        self.rot_degree = random.randrange(-3, 3)
+
+    def rotate(self):
+        self.total_degree += self.rot_degree
+        self.total_degree = self.total_degree % 360
+        self.image = pygame.transform.rotate(self.image_ori, self.total_degree)
+        center = self.rect.center
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+
     def update(self):
+        self.rotate()
         self.rect.y += self.speedy
         self.rect.x += self.speedx
         if self.rect.top >  HEIGHT or self.rect.left > WIDTH or self.rect.right < 0:
@@ -114,7 +131,7 @@ while running:
         all_sprites.add(rock)
         rocks.add(rock)
 
-    hits = pygame.sprite.spritecollide(player, rocks, False)
+    hits = pygame.sprite.spritecollide(player, rocks, False, pygame.sprite.collide_circle)
     if hits:
         running = False
 
