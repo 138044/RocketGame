@@ -148,17 +148,20 @@ class Player(pygame.sprite.Sprite):
     def shoot(self):
         if not(self.hidden):
             if self.gun == 1:
-                bullet = Bullet(self.rect.centerx, self.rect.top)
+                bullet = Bullet(self.rect.centerx, self.rect.top, 'middle')
                 all_sprites.add(bullet)
                 bullets.add(bullet)
                 shoot_sound.play()
             elif self.gun >= 2:
-                bullet1 = Bullet(self.rect.left, self.rect.centery)
-                bullet2 = Bullet(self.rect.right, self.rect.centery)
+                bullet1 = Bullet(self.rect.left, self.rect.centery, 'left')
+                bullet2 = Bullet(self.rect.right, self.rect.centery, 'right')
+                bullet3 = Bullet(self.rect.centerx, self.rect.centery - 5, 'middle')
                 all_sprites.add(bullet1)
                 all_sprites.add(bullet2)
+                all_sprites.add(bullet3) 
                 bullets.add(bullet1)
                 bullets.add(bullet2)
+                bullets.add(bullet3)
                 shoot_sound.play()
     
     def hide(self):
@@ -206,17 +209,27 @@ class Rock(pygame.sprite.Sprite):
             self.speedx = random.randrange(-3, 3)
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, armo_pos):
         pygame.sprite.Sprite.__init__(self)
         self.image = bullet_img
+        if armo_pos == 'left':
+            self.image = pygame.transform.rotate(self.image, 35)
+        elif armo_pos == 'right':
+            self.image = pygame.transform.rotate(self.image, -35)
+        
         self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx =  x
         self.rect.bottom =  y
-        self.speedy =  -10
+        self.speedy =  5
+        self.armo_pos = armo_pos
     
     def update(self):
-        self.rect.y += self.speedy
+        self.rect.y -= self.speedy
+        if self.armo_pos == 'left':
+            self.rect.x -= self.speedy
+        elif self.armo_pos == 'right':
+            self.rect.x += self.speedy
         if self.rect.bottom < 0:
             self.kill()
 
@@ -298,7 +311,7 @@ while running:
         score += hit.radius
         expl = Explosion(hit.rect.center, 'lg')
         all_sprites.add(expl)
-        if random.random() > 0.5:
+        if random.random() > 0.9:
             pow = Power(hit.rect.center)
             all_sprites.add(pow)
             powers.add(pow)
@@ -346,7 +359,7 @@ while running:
     screen.fill(BLACK)
     screen.blit(background_img, (0,0))
     all_sprites.draw(screen)
-    draw_text(screen, str(score), 18, WIDTH/2, 10)
+    draw_text(screen, "Your Score: " + str(score), 18, WIDTH/2, 10)
     draw_health(screen, player.health, 5, 18)
     draw_lives(screen, player.lives, player_mini_img, WIDTH - 100, 15)
     pygame.display.update()
