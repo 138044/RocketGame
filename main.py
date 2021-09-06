@@ -17,6 +17,7 @@ pygame.mixer.init()
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Rocket Game")
+
 clock = pygame.time.Clock()
 
 background_img = pygame.image.load(os.path.join("img", "background.png")).convert()
@@ -24,6 +25,7 @@ player_img = pygame.image.load(os.path.join("img", "player.png")).convert()
 rock_img = pygame.image.load(os.path.join("img", "rock.png")).convert()
 player_mini_img = pygame.transform.scale(player_img, (25,19))
 player_mini_img.set_colorkey(BLACK)
+pygame.display.set_icon(player_mini_img)
 bullet_img = pygame.image.load(os.path.join("img", "bullet.png")).convert()
 expl_anim = {}
 expl_anim['lg'] = []
@@ -54,7 +56,7 @@ expl_sounds = [
 pygame.mixer.music.load(os.path.join("sound", "background.ogg"))
 pygame.mixer.music.set_volume(0.4)
 
-font_name = pygame.font.match_font('arial')
+font_name = os.path.join("font.ttf")
 def draw_text(surf, text, size, x, y):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True, WHITE)
@@ -85,6 +87,24 @@ def draw_lives(surf, lives, img, x, y):
         img_rect.x = x + 30 * i
         img_rect.y = y
         surf.blit(img, img_rect)
+
+def draw_init():
+    screen.blit(background_img, (0,0))
+    draw_text(screen, '太空飞船战！', 64, WIDTH/2, HEIGHT/4)
+    draw_text(screen, '左右键移动飞船 空白键发射子弹', 22, WIDTH/2, HEIGHT/2)
+    draw_text(screen, '按任意键开始游戏！', 18, WIDTH/2, HEIGHT*3/4)
+    pygame.display.update()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        # user input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return True
+            elif event.type == pygame.KEYUP:
+                waiting = False
+                return False
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -251,9 +271,16 @@ pygame.mixer.music.play(-1)
 for i in range(8):
     new_rock()
 
+show_init = True
 running = True
 
 while running:
+    if show_init:
+        close = draw_init()
+        if close:
+            break
+        show_init = False
+        
     clock.tick(FPS)
     # user input
     for event in pygame.event.get():
@@ -303,7 +330,17 @@ while running:
             gun_sound.play()
 
     if player.lives == 0 and not (death_expl.alive()):
-        running = False
+        all_sprites = pygame.sprite.Group()
+        rocks = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        powers = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
+        score = 0
+        for i in range(8):
+            new_rock()
+        show_init = True
+        
 
     # render
     screen.fill(BLACK)
